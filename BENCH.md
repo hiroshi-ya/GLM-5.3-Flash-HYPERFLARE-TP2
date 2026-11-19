@@ -1,3 +1,13 @@
+These `llama-benchy` results are obtained with a `--mtp-draft-tokens 3` and `--no-context-parallel` core.
+
+```console
+llama-benchy --base-url http://$SERVER_IP:$SERVER_PORT/v1 \
+    --pp 2048 --tg 128 --depth 0 4096 16384 65536 \
+    --concurrency 1 2 4 --format md \
+    --save-result BENCH.md \
+    --book-url https://sherlock-holm.es/stories/plain-text/cano.txt
+```
+
 | model                          |                 test |      t/s (total) |        t/s (req) |     peak t/s |   peak t/s (req) |           ttfr (ms) |        est_ppt (ms) |       e2e_ttft (ms) |
 |:-------------------------------|---------------------:|-----------------:|-----------------:|-------------:|-----------------:|--------------------:|--------------------:|--------------------:|
 | nvidia/GLM-5.3-Flash-FP4-Local |          pp2048 (c1) | 1332.13 ± 432.88 | 1332.13 ± 432.88 |              |                  |    1748.83 ± 656.45 |    1746.46 ± 656.45 |    1748.83 ± 656.45 |
