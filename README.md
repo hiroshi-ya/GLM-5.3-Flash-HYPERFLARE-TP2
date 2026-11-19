@@ -29,17 +29,17 @@ at `76348ddb`. This package can be served at a full **1,048,576-token** context 
 If you need a TLDR, you can find some [llama-benchy](https://github.com/eugr/llama-benchy) results generated on a dual Asus GX10 setup in [BENCH.md](BENCH.md).
 
 If you are still interested after browsing that, here are some additional reasons on why you might want to read through this:
-1. You don't enjoy using docker.
-2. You don't enjoying messing with endless amount of environment variables.
-3. vLLM comes with its own glitches and you are too tired to deal with.
+1. You don't enjoy using Docker.
+2. You don't enjoy messing with endless amount of environment variables.
+3. vLLM comes with its own glitches, and you are too tired to deal with them.
 4. vLLM loads too slowly, especially during cold boots.
 5. You want to play with Hyperflare on your own, but its (AI-written) documentation is too confusing and lengthy to follow.
 
 ## How to serve
 
 If you just want to download this package and serve it, here are the prerequisites:
-1. A relative new pair of `rustc` and `cargo`.
-2. Two DGX Sparks (FE or variants) connected via ConnectX7. For this package, tensor parallel cannot be set to 4, and if you have such a need, you need to export your own package (see [Reproduction](#reproduction)).
+1. A relatively new pair of `rustc` and `cargo`.
+2. Two DGX Sparks (FE or variants) connected via ConnectX7. For this package, tensor parallel cannot be set to 4; if you need TP=4, you must export your own package (see [Reproduction](#reproduction)).
 3. At least ~185 GiB of available storage space: `hyperflare` needs about 10 GiB to compile, and this package is about 181 GiB.
 4. A way to download large files from huggingface.
 5. Working Nvidia driver (R580 or later) on both nodes.
@@ -62,10 +62,10 @@ If you just want to download this package and serve it, here are the prerequisit
 | speculation          | mtp · widths 1, 2, 3, 4, 5, 6    |
 
 > [!IMPORTANT]
-> You cannot freely modify the properties of this packaged runtime. For example, the `--mtp-draft-tokens` was set to 5 during the export, meaning that `flare` cannot use more than 5 speculative tokens when serving this package. Same applies to the concurrency and prefill chunk properties. If you want to adjust the model properties, you have to export your own package. See [Reproduction](#reproduction).
+> You cannot freely modify the properties of this packaged runtime. For example, the `--mtp-draft-tokens` was set to 5 during the export, meaning that `flare` cannot use more than 5 speculative tokens when serving this package. The same applies to the concurrency and prefill chunk properties. If you want to adjust the model properties, you have to export your own package. See [Reproduction](#reproduction).
 
 ### Connect your DGX Sparks
-If you have not done so, connect your DGX Sparks with a QSFP-56 cable to utilize the 200 GbE ConnectX-7. After you plugged in the cable, properly configure your RoCE setup. Refer to Nvidia's [guide](https://build.nvidia.com/spark/connect-multiple-sparks/overview) if you don't know how to.
+If you have not done so, connect your DGX Sparks with a QSFP-56 cable to utilize the 200 GbE ConnectX-7. After you plug in the cable, properly configure your RoCE setup. Refer to Nvidia's [guide](https://build.nvidia.com/spark/connect-multiple-sparks/overview) if you don't know how to.
 
 > [!NOTE]
 > CUDA runtime and NCCL are not required for serving. `flare`'s cross-node parallelism runs directly on RoCE.
@@ -75,7 +75,7 @@ On one node:
 ```console
 $ git clone https://github.com/NVIDIA/hyperflare-inference
 $ cd hyperflare-inference
-$ # git checkout 1a53275 # in case a breaking change happen
+$ # git checkout 1a53275 # in case a breaking change happens
 $ cargo build --release --manifest-path flare-cli/Cargo.toml
 ```
 After a successful compilation, the `flare` executable binary will be generated in `hyperflare-inference/flare-cli/target/release/`. You can either do the compilation again on your second node, or simply copy the executable binary over there.
@@ -149,7 +149,7 @@ $ curl http://$SERVER_IP:$SERVER_PORT/v1/chat/completions \
 ## Reproduction
 
 If you want to export the hyperflare core by yourself, here are the prerequisites:
-1. A relative new pair of `rustc` and `cargo`, and `uv`.
+1. A relatively new pair of `rustc` and `cargo`, and `uv`.
 2. Two DGX Sparks (FE or variants) connected via ConnectX7.
 3. At least ~360 GiB of available storage space: the original [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local) needs about 177 GiB, and the export needs about 171 GiB.
 4. A way to download large files from huggingface.
@@ -172,12 +172,12 @@ If on Fedora:
 4. Convert the core into a packed form (optional).
 5. Use `flare` to serve the hyperflare core.
 
-### Obatin `ignition` and `flare`
+### Obtain `ignition` and `flare`
 On both nodes:
 ```console
 $ git clone https://github.com/NVIDIA/hyperflare-inference
 $ cd hyperflare-inference
-$ # git checkout 5a4e8679 # in case a breaking change happen
+$ # git checkout 1a53275 # in case a breaking change happens
 $ uv sync --locked --extra prepare --extra test
 $ cargo build --release --manifest-path flare-cli/Cargo.toml
 ```
@@ -220,11 +220,11 @@ $ ignition join $HEAD_IP:$HEAD_PORT \
 ```
 
 >[!NOTE]
-> 1. `ignition` will check the default huggingface download cache directory. If `ignition` isn't able to locate the checkpoints locally, it will download the checkpoints for you. If your checkpoints are saved in a customized location, replace `nvidia/GLM-5.3-Flash-FP4-Local` by `/path/to/the/model`.
+> 1. `ignition` will check the default huggingface download cache directory. If `ignition` isn't able to locate the checkpoints locally, it will download the checkpoints for you. If your checkpoints are saved in a customized location, replace `nvidia/GLM-5.3-Flash-FP4-Local` with `/path/to/the/model`.
 > 2. The export procedure can take a long time (about an hour).
 
 
-If you want a finer control, refer to the full argument list:
+If you want finer control, refer to the full argument list:
 ```console
 $ ignition export glm-5.3-flash -h
 ```
@@ -271,7 +271,7 @@ $ ignition sign /path/to/your/flare/cores/models/nvidia_2FGLM-5.3-Flash-FP4-Loca
   --namespace your-name \
   --official-source https://huggingface.co/your-name/your-repo
 ```
-Replace `nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439` by the actual `MODEL/VERSION` name.
+Replace `nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439` with the actual `MODEL/VERSION` name.
 
 >[!TIP]
 >`ignition sign` uses hard links for the model weight, so you do not have to worry about storage usage.
@@ -284,8 +284,8 @@ In the `CORE` section, `publisher` should be `Your Name (your-namespace)`, and t
 
 ### Pack the core
 This step is optional if you just want to serve locally. However:
-1. If you are using shared storage for storing models (via NFS, NVMe-oF, etc.), I strongly recommend you to pack your core into a signle `.safetensors` file.
-2. If you are not using any shared storage (i.e. you make identical copies from one node to the other), I recommend you to avoid this step.
+1. If you are using shared storage for storing models (via NFS, NVMe-oF, etc.), I strongly recommend you pack your core into a single `.safetensors` file.
+2. If you are not using any shared storage (i.e., you make identical copies from one node to the other), I recommend that you avoid this step.
 
 ```console
 $ ignition convert /path/to/your/signed/glm-5.3-flash \
@@ -303,7 +303,7 @@ If you didn't sign your core and don't know where your exported unsigned core is
 Before serving across both nodes, you need to make sure that the publisher identification `json` file is available on both nodes.
 
 If you did not sign your core:
-- During the `ignition export` process, `ignition` will generate the development key on the head node only. You need to manually copy the `development-publisher.json` to your worker node. On both nodes, the default location would be `~/.config/flare`.
+- During the `ignition export` process, `ignition` will generate the development key on the head node only. You need to manually copy the `development-publisher.json` to your worker node. On both nodes, the default location is `~/.config/flare`.
 
 If you signed your core:
 - Make sure to copy the `publisher.json` to your worker node.
@@ -343,7 +343,7 @@ $ flare run \
     --gpus 0
 ```
 
-When serving for the first time, `flare` will ask you if you trust the publisher. After you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/` by default, and the `--publisher-keys` argument will be no longer needed in the future.
+When serving for the first time, `flare` will ask you if you trust the publisher. After you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/` by default, and the `--publisher-keys` argument will no longer be needed in the future.
 
 ### Publish
 If you want to publish your export, don't forget to include the `publisher.json` file in your repository.
@@ -352,13 +352,13 @@ If you want to publish your export, don't forget to include the `publisher.json`
 
 This repository is a packaging, validation, and publication effort only. The model, runtime, recipes, kernels, and benchmark tooling are the work of others. No authorship claim is made over any upstream work.
 
-- **Local Inference Lab and the NVIDIA Hyperflare (formerly Flare) authors and contributors** — runtime, recipes, package format and documentation ([`NVIDIA/hyperflare-inference`](https://github.com/NVIDIA/hyperflare-inference)).
+- **Local Inference Lab and the NVIDIA Hyperflare (formerly Flare) authors and contributors** — runtime, recipes, package format, and documentation ([`NVIDIA/hyperflare-inference`](https://github.com/NVIDIA/hyperflare-inference)).
 - **NVIDIA and Z.ai** — the GLM-5.3-Flash FP4 checkpoint ([`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local/tree/main)) and the [`
 zai-org/GLM-5.3-Flash`](https://huggingface.co/zai-org/GLM-5.3-Flash) base model.
 - **Ricky Brent** — [`rickybrent/GLM-5.3-Flash-HYPERFLARE-TP2`](https://huggingface.co/rickybrent/GLM-5.3-Flash-HYPERFLARE-TP2) inspired this repository.
 
 Packaged, validated, and published on a dual Asus GX10 setup. The package's publisher identity is a signing identity, not an authorship claim.
-All credits for the model, engine, kernels and fixes belong to the projects and people listed above.
+All credits for the model, engine, kernels, and fixes belong to the projects and people listed above.
 
 ## License
 
