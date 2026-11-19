@@ -1,7 +1,47 @@
-These `llama-benchy` results are obtained with a `--mtp-draft-tokens 5` core.
+These `llama-benchy` results are obtained with a `--mtp-draft-tokens 5` core:
 
 ```console
-llama-benchy --base-url http://$SERVER_IP:$SERVER_PORT/v1 \
+$ flare run $MODEL_PATH/glm-5.3-flash-hyperflare-gb10-tp2.safetensors \
+  --rank 0 \
+  --gpus 0 \
+  --rendezvous $HEAD_IP:$HEAD_PORT \
+  --host $SERVER_IP \
+  --port $SERVER_PORT
+         ·                                           ╱      ·    ⠂
+                                            ·   ⣠⠞  ⢀⣠⣤⣤⣄⡀   ✧
+                                              ⣰⡿⣠⣾⠟⠋⠉⠉⠛⢿⣦⡀   ⠄
+       ████╗ ██╗                               ⣰⣿⣿⠟⠁  ⣠⠴⠒⠲⣄⠹⣷⡀
+      ██╔══╝ ██║  ▄▄▄▄╗   ▄▄ ▄▄▄╗  ▄▄▄▄╗      ⢠⣿⡿⠁ ⢀⡾⠋      ⠹⡆⢹⣧ ·
+     █████╗  ██║  ▄▄▄██╗  ███╔══╝ ██▄▄██╗    ⢠⣾⣿⠃ ⣠⠟   ✦      ⢻⠈⡿ ⠂
+      ██╔═╝  ██║ ██╔═██║  ██╔╝    ██╔═══╝   ⢸⣿⡏ ⣰⠏           ⡼ ⠸   ╱
+      ██║    ██║ ╚█████║  ██║     ╚█████╗   ⢸⣿⣿⣧⡾⠃       ⢀⡴⠋  ·  ⠊
+      ╚═╝    ╚═╝  ╚════╝  ╚═╝      ╚════╝  ⣰⣿⣿⣿⡿⠁   ⢀⣠⠴⠚⠉    ⠄
+                                          ⢀⣾⣿⡇ ⣠⡾⠋    ⠂    ✧
+                  ⣀⣀⣀⣀⣠⠤⢤⠤⢤⡤⠤⣶⡒⢒⣒⠒⢒⡒⣶⣾⣿⣿⣷⡿⠋⡤⠤⣤⠤⠤⠤⣄⣀⣀⣀⣀
+      ⢀⣀⣀⡤⢤⢴⢲⠒⡞⡽⡫⣉⢗⢦⢠⠒⡄⡴⡢⢀⢖⢆⣠⡴⠛⠋⣠⣾⡿⠿⠿⣷⣄⡔⡢⠈⠙⠲⣄⡲⡄⡔⣢⢠⢖⢄⠰⡺⡍⡝⢫⢳⢖⢖⠦⡤⢤⣀⣀⡀
+⡠⢤⠔⡒⢊⡭⣭⢚⡒⢿⠶⠠⣄⣀⡠⠔⠋⣿⠖⡋⢠⠭⡄⢉⠊⣿⢖⣠⠞⠋⡀⢉⠈⠙⢦⣄⠈⠙⠷⣤⡀⡾⢒⠚⣦⠈⠢⡀⠥⡞⢓⠺⡷⢌⠁⣨⢥⡜⣓⠺⡷⢎⠁⡨⢥⡉⣛⢵⡶⢢⠤⢄
+⣊⣸⠮⠞⠈⠪⠤⠤⠒⠋⠮⠼⠈⣊⣼⣮⡚⠈⣀⡠⠤⠤⠒⠋⠔ ⠣⢵⣇⣓⣁⠧⠵⠁⢓⣵⠈⠑⠢⣄⠵⠃⣓⠉⠓⠦⣄⣀⠥⣇⣑⠈⠂⠵⠃⠑⢥⣧⣑⡃⠳⠥⠇⢑⣡⣷⣕⠃⠱⠥⢇⣑
+
+[    OK    ] Verify core.  signatures                                                                                                                                           0.4s
+[    OK    ] Verify stored data.  0.0 GiB                                                                                                                                       0.0s
+[    OK    ] Wait for tensor-parallel hosts.  1 peer ranks                                                                                                                      6.4s
+[    OK    ] Distribute rank cores over CX7.  all rank cores verified                                                                                                           1.0s
+[    OK    ] Prepare model.  1 rank                                                                                                                                             0.0s
+[    OK    ] Initialize GPU.  GPU 0 · SM121                                                                                                                                     0.3s
+[    OK    ] Allocate model memory.  86.3 GiB GPU · 0.2 GiB host                                                                                                                2.6s
+[    OK    ] Load weights.  83.8 GiB                                                                                                                                           32.3s
+[    OK    ] Prepare kernels.  4373 kernels                                                                                                                                     0.7s
+[    OK    ] Prepare execution.  concurrency 4                                                                                                                                  0.6s
+[    OK    ] Plan cache.  per GPU: 89.74 GiB loaded · 14.70 GiB cache budget                                                                                                    0.0s
+[    OK    ] Allocate cache.  14.7 GiB · 4559360 KV tokens · 177 shared snapshot slots · limited by memory                                                                      0.9s
+[    OK    ] Read model configuration.  nvidia/GLM-5.3-Flash-FP4-Local                                                                                                          0.0s
+[    OK    ] Connect RoCE transport.  2 rails per peer: rank 1 roceP2p1s0f1,rocep1s0f1                                                                                          0.1s
+[    OK    ] Join host prefix stores.  none                                                                                                                                     0.0s
+[    OK    ] Load tokenizer.  154880 token vocabulary                                                                                                                           0.5s
+[━━━━━━━━━━] Start server.                                                                                                                                                      0.5s[flare] frame completion wait: WFET
+[    OK    ] Start server.  http://0.0.0.0:8000 · 1048576 tokens/request                                                                                                        0.5s
+
+$ llama-benchy --base-url http://$SERVER_IP:$SERVER_PORT/v1 \
     --pp 2048 --tg 128 --depth 0 4096 16384 65536 100000 \
     --concurrency 1 2 4 --format md \
     --save-result BENCH.md \
