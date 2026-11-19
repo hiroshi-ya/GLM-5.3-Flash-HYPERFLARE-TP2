@@ -19,10 +19,10 @@ base_model: nvidia/GLM-5.3-Flash-FP4-Local
 
 # GLM-5.3-Flash FP4 HYPERFLARE — TP2, GB10
 
-A prepared [Hyperflare](https://github.com/NVIDIA/hyperflare-inference) runtime
-package for **GLM-5.3-Flash** on two **DGX Sparks** (GB10 / SM121), tensor-parallel TP2. The base checkpoint is
+A prepared [Hyperflare](https://github.com/NVIDIA/hyperflare-inference) (at `1a53275`) runtime
+package for **GLM-5.3-Flash** running across two **DGX Sparks** (GB10 / SM121). The base checkpoint for the model is
 [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local)
-at `76348ddb`. This package can be served with full **1,048,576-token** context.
+at `76348ddb`. This package can be served at a full **1,048,576-token** context with around **4.5 million KV tokens**.
 
 ## Before you spend time reading this
 
@@ -59,10 +59,10 @@ If you just want to download this package and serve it, here are the prerequisit
 | default output limit | remaining context                |
 | vocabulary           | 154,880                          |
 | cache histories      | continuation state, paged latent |
-| speculation          | mtp · widths 1, 2, 3             |
+| speculation          | mtp · widths 1, 2, 3, 4, 5, 6    |
 
 > [!IMPORTANT]
-> You cannot freely modify the properties of this packaged runtime. For example, the `--mtp-draft-tokens` was set to 3 during the export, meaning that `flare` cannot use more than 3 speculative tokens when serving the model. Same applies to the concurrency and prefill chunk properties. If you want to adjust the model properties, you have to export your own package. See [Reproduction](#reproduction).
+> You cannot freely modify the properties of this packaged runtime. For example, the `--mtp-draft-tokens` was set to 5 during the export, meaning that `flare` cannot use more than 5 speculative tokens when serving the model. Same applies to the concurrency and prefill chunk properties. If you want to adjust the model properties, you have to export your own package. See [Reproduction](#reproduction).
 
 ### Connect your DGX Sparks
 If you have not done so, connect your DGX Sparks with a QSFP-56 cable to utilize the 200 GbE ConnectX-7. After you plugged in the cable, configure your local network connection. Refer to Nvidia's [guide](https://build.nvidia.com/spark/connect-multiple-sparks/overview) if you don't know how to.
@@ -75,7 +75,7 @@ On one node:
 ```console
 $ git clone https://github.com/NVIDIA/hyperflare-inference
 $ cd hyperflare-inference
-$ # git checkout 5a4e8679 # in case a breaking change happen
+$ # git checkout 1a53275 # in case a breaking change happen
 $ cargo build --release --manifest-path flare-cli/Cargo.toml
 ```
 After a successful compilation, the `flare` executable binary will be generated in `hyperflare-inference/flare-cli/target/release/`. You can either do the compilation again on your second node, or simply copy the executable binary to there.
@@ -101,7 +101,7 @@ GLM-5.3-Flash-HYPERFLARE-GB10-TP2
 `glm-5.3-flash-hyperflare-gb10-tp2.safetensors` is the packaged hyperflare runtime, and `publisher.json` is the publisher key. When serving the model for the first time, you will have to trust the publisher first, or `flare` will refuse to serve the model.
 
 ### Serve
-Start the head node first:
+Start the head node:
 ```console
 $ export HEAD_IP=       # IP address of your head node
 $ export HEAD_PORT=     # which port to use for head-worker communication
@@ -117,7 +117,7 @@ $ flare run $MODEL_PATH/glm-5.3-flash-hyperflare-gb10-tp2.safetensors \
     --gpus 0
 ```
 
-Then, start your worker node:
+Start the worker node:
 ```console
 $ export HEAD_IP=       # IP address of your head node
 $ export HEAD_PORT=     # which port to use for head-worker communication
@@ -129,7 +129,22 @@ $ flare run $MODEL_PATH/glm-5.3-flash-hyperflare-gb10-tp2.safetensors \
     --gpus 0
 ```
 
-When serving for the first time, `flare` will ask you if you trust the publisher. Once you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/`, and the `--publisher-keys` argument will be no longer needed in the future.
+When serving for the first time, `flare` will ask you if you trust the publisher (on both nodes). After you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/` by default, and the `--publisher-keys` argument will no longer be needed in the future.
+
+After the server is ready:
+```console
+$ curl http://$SERVER_IP:$SERVER_PORT/v1/models # check if alive
+$ curl http://$SERVER_IP:$SERVER_PORT/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "GLM-5.3-Flash",
+    "messages": [
+      {"role": "user", "content": "hi how are you"}
+    ],
+    "temperature": 1.0,
+    "top_p": 0.95
+  }'
+```
 
 ## Reproduction
 
@@ -231,9 +246,9 @@ $ ignition keygen \
     --directory /path/to/your/key
 ```
 
-After that, you will obtain `signing-key.pem` and `publisher.json` in the directory you specified. You need `signing-key.pem` (and its passphrase if you created one) to sign the core, and the public needs `publisher.json` to serve the core that's signed by you.
+After that, you will obtain `signing-key.pem` and `publisher.json` in the directory you specified. You need `signing-key.pem` (and its passphrase) to sign the core, and the public needs `publisher.json` to serve the core that's signed by you.
 
-Before signing the core, we need to find out where the core is:
+Before signing the core, we need to find out where the exported core is:
 ```console
 $ flare models list
 
@@ -250,5 +265,82 @@ If you haven't created a customized `config.toml`, `~/.cache/flare/core` will be
 
 Then, proceed to sign the core:
 ```console
-sss
+$ ignition sign /path/to/your/flare/cores/models/nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439 \
+  --output /path/to/your/signed/glm-5.3-flash \
+  --signing-key /path/to/your/signing-key.pem \
+  --namespace your-name \
+  --official-source https://huggingface.co/your-name/your-repo
 ```
+Replace `nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439` by the actual `MODEL/VERSION` name.
+
+>[!TIP]
+>`ignition sign` uses hard links for the model weight, so you do not have to worry about storage usage.
+
+After signing the core, inspect its properties:
+```console
+$ flare inspect /path/to/your/signed/glm-5.3-flash --all | less
+```
+At the `CORE` section, `publisher` should be `Your Name (your-namespace)`, and the signing key should be a `published key`.
+
+### Pack the core
+This step is optional if you just want to serve locally. However:
+1. If you are using shared space for storing models (via NFS, NVMe-oF, etc.), I strongly recommend you to pack your core and model into a signle `safetensors` file.
+2. If you are not using any shared space (i.e. you make identical copies from one node to the other), you should avoid this step.
+
+```console
+$ ignition convert /path/to/your/signed/glm-5.3-flash \
+    --output /path/to/your/output.safetensors \
+    --form packed
+```
+
+If you didn't sign your core and don't know where your exported unsigned core is, go back to [Sign the core](#sign-the-core) to find out how to locate it.
+
+>[!WARNING]
+>Packing the core requires about 181 GiB of additional storage space. Leave enough space for the conversion.
+
+### Serve
+
+Before serving across both nodes, you need to make sure that the publisher identification `json` file is available on both nodes.
+
+If you did not sign your core:
+- During the `ignition export` process, `ignition` will generate the development key on the head node only. You need to manually copy the `development-publisher.json` to your worker node. On both nodes, the default location would be `~/.config/flare`.
+
+If you signed your core:
+- Make sure to copy the `publisher.json` to your worker node.
+
+Start the head node first:
+```console
+$ export HEAD_IP=       # IP address of your head node
+$ export HEAD_PORT=     # which port to use for head-worker communication
+$ export SERVER_IP=     # IP address of your serving address
+$ export SERVER_PORT=   # Port of your serving address
+$ flare run /path/to/your/output.safetensors \
+    --publisher-keys /path/to/your/publisher.json \
+    --rendezvous $HEAD_IP:$HEAD_PORT \
+    --host $SERVER_IP \
+    --port $SERVER_PORT \
+    --rank 0 \
+    --gpus 0
+```
+If you didn't pack your core, replace `/path/to/your/output.safetensors` with `/path/to/your/signed/glm-5.3-flash` or `nvidia/GLM-5.3-Flash-FP4-Local@MODEL_VERSION`. `MODEL_VERSION` can be obtained from `flare models list`, and if there is only one version, you can drop the `@VERSION`.
+
+Then, start your worker node:
+```console
+$ export HEAD_IP=       # IP address of your head node
+$ export HEAD_PORT=     # which port to use for head-worker communication
+$ flare run /path/to/your/output.safetensors \
+    --publisher-keys /path/to/your/publisher.json \
+    --rendezvous $HEAD_IP:$HEAD_PORT \
+    --rank 1 \
+    --gpus 0
+```
+If you didn't pack your core, **drop the model path completely**:
+```console
+$ flare run \
+    --publisher-keys /path/to/your/publisher.json \
+    --rendezvous $HEAD_IP:$HEAD_PORT \
+    --rank 1 \
+    --gpus 0
+```
+
+When serving for the first time, `flare` will ask you if you trust the publisher. After you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/` by default, and the `--publisher-keys` argument will be no longer needed in the future.
