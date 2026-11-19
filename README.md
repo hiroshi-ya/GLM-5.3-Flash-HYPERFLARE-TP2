@@ -26,26 +26,26 @@ at `76348ddb`. This package can be served at a full **1,048,576-token** context 
 
 ## Before you spend time reading this
 
-If you need a TLDR, you can find some [llama-benchy](https://github.com/eugr/llama-benchy) results generated on a dual Asus GX10 setup [here](BENCH.md).
+If you need a TLDR, you can find some [llama-benchy](https://github.com/eugr/llama-benchy) results generated on a dual Asus GX10 setup in [BENCH.md](BENCH.md).
 
-If you are still interested after reading that, here are some additional reasons on why you may want to read through this:
-1. You don't enjoy using docker or even virtual environments.
+If you are still interested after browsing that, here are some additional reasons on why you might want to read through this:
+1. You don't enjoy using docker.
 2. You don't enjoying messing with endless amount of environment variables.
-3. vLLM comes with its own glitches and you are too tired to deal with those.
+3. vLLM comes with its own glitches and you are too tired to deal with.
 4. vLLM loads too slowly, especially during cold boots.
-5. You want to play with Hyperflare on your onw, but its (AI-written) documentation is too confusing and lengthy to follow.
+5. You want to play with Hyperflare on your own, but its (AI-written) documentation is too confusing and lengthy to follow.
 
 ## How to serve
 
 If you just want to download this package and serve it, here are the prerequisites:
 1. A relative new pair of `rustc` and `cargo`.
 2. Two DGX Sparks (FE or variants) connected via ConnectX7. For this package, tensor parallel cannot be set to 4, and if you have such a need, you need to export your own package (see [Reproduction](#reproduction)).
-3. At least ~185 GiB of available storage space: `hyperflare` needs about 10 GiB to compile, and the package is about 180 GiB.
+3. At least ~185 GiB of available storage space: `hyperflare` needs about 10 GiB to compile, and this package is about 181 GiB.
 4. A way to download large files from huggingface.
 5. Working Nvidia driver (R580 or later) on both nodes.
 
 > [!TIP]
-> If you are low on storage space, once you obtained the `flare` executable binary, you can delete the source code and build artifacts. The binary itself is about 26 MiB. Besides, consider exporting your download directory as an NFS mount point, so you can not only save space but also avoid copying the model.
+> If you are low on storage space, once you obtained the `flare` executable binary, you can delete the source code and build artifacts. The binary itself is about 26 MiB. Besides, consider exporting your download directory as an NFS mount point, so you can not only save space but also avoid copying the model manually.
 
 ### Package properties
 
@@ -62,7 +62,7 @@ If you just want to download this package and serve it, here are the prerequisit
 | speculation          | mtp · widths 1, 2, 3, 4, 5, 6    |
 
 > [!IMPORTANT]
-> You cannot freely modify the properties of this packaged runtime. For example, the `--mtp-draft-tokens` was set to 5 during the export, meaning that `flare` cannot use more than 5 speculative tokens when serving the model. Same applies to the concurrency and prefill chunk properties. If you want to adjust the model properties, you have to export your own package. See [Reproduction](#reproduction).
+> You cannot freely modify the properties of this packaged runtime. For example, the `--mtp-draft-tokens` was set to 5 during the export, meaning that `flare` cannot use more than 5 speculative tokens when serving this package. Same applies to the concurrency and prefill chunk properties. If you want to adjust the model properties, you have to export your own package. See [Reproduction](#reproduction).
 
 ### Connect your DGX Sparks
 If you have not done so, connect your DGX Sparks with a QSFP-56 cable to utilize the 200 GbE ConnectX-7. After you plugged in the cable, configure your local network connection. Refer to Nvidia's [guide](https://build.nvidia.com/spark/connect-multiple-sparks/overview) if you don't know how to.
@@ -78,7 +78,7 @@ $ cd hyperflare-inference
 $ # git checkout 1a53275 # in case a breaking change happen
 $ cargo build --release --manifest-path flare-cli/Cargo.toml
 ```
-After a successful compilation, the `flare` executable binary will be generated in `hyperflare-inference/flare-cli/target/release/`. You can either do the compilation again on your second node, or simply copy the executable binary to there.
+After a successful compilation, the `flare` executable binary will be generated in `hyperflare-inference/flare-cli/target/release/`. You can either do the compilation again on your second node, or simply copy the executable binary over there.
 
 ### Obtain this model package
 If you have the `hf` CLI tool:
@@ -148,7 +148,7 @@ $ curl http://$SERVER_IP:$SERVER_PORT/v1/chat/completions \
 
 ## Reproduction
 
-If you want to export the model by yourself, here are the prerequisites:
+If you want to export the hyperflare core by yourself, here are the prerequisites:
 1. A relative new pair of `rustc` and `cargo`, and `uv`.
 2. Two DGX Sparks (FE or variants) connected via ConnectX7.
 3. At least ~360 GiB of available storage space: the original [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local) needs about 177 GiB, and the export needs about 171 GiB.
@@ -167,7 +167,7 @@ If on Fedora:
 
 ### Reproduction flow
 1. Obtain the original model checkpoints.
-2. Use `ignition` to export the original checkpoints into hyperflare core.
+2. Use `ignition` to export the original checkpoints into a hyperflare core.
 3. Sign the exported core (optional).
 4. Convert the core into a packed form (optional).
 5. Use `flare` to serve the hyperflare core.
@@ -280,12 +280,12 @@ After signing the core, inspect its properties:
 ```console
 $ flare inspect /path/to/your/signed/glm-5.3-flash --all | less
 ```
-At the `CORE` section, `publisher` should be `Your Name (your-namespace)`, and the signing key should be a `published key`.
+In the `CORE` section, `publisher` should be `Your Name (your-namespace)`, and the signing key should be a `published key`.
 
 ### Pack the core
 This step is optional if you just want to serve locally. However:
-1. If you are using shared space for storing models (via NFS, NVMe-oF, etc.), I strongly recommend you to pack your core and model into a signle `safetensors` file.
-2. If you are not using any shared space (i.e. you make identical copies from one node to the other), you should avoid this step.
+1. If you are using shared storage for storing models (via NFS, NVMe-oF, etc.), I strongly recommend you to pack your core into a signle `.safetensors` file.
+2. If you are not using any shared storage (i.e. you make identical copies from one node to the other), I recommend you to avoid this step.
 
 ```console
 $ ignition convert /path/to/your/signed/glm-5.3-flash \
@@ -293,7 +293,7 @@ $ ignition convert /path/to/your/signed/glm-5.3-flash \
     --form packed
 ```
 
-If you didn't sign your core and don't know where your exported unsigned core is, go back to [Sign the core](#sign-the-core) to find out how to locate it.
+If you didn't sign your core and don't know where your exported unsigned core is, go back to [Sign the core](#sign-the-core) to find out how to locate your unsigned core.
 
 >[!WARNING]
 >Packing the core requires about 181 GiB of additional storage space. Leave enough space for the conversion.
@@ -345,6 +345,9 @@ $ flare run \
 
 When serving for the first time, `flare` will ask you if you trust the publisher. After you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/` by default, and the `--publisher-keys` argument will be no longer needed in the future.
 
+### Publish
+If you want to publish your export, don't forget to include the `publisher.json` file in your repository.
+
 ## Credits
 
 This repository is a packaging, validation, and publication effort only. The model, runtime, recipes, kernels, and benchmark tooling are the work of others. No authorship claim is made over any upstream work.
@@ -353,19 +356,15 @@ This repository is a packaging, validation, and publication effort only. The mod
 - **NVIDIA and Z.ai** — the GLM-5.3-Flash FP4 checkpoint ([`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local/tree/main)) and the [`
 zai-org/GLM-5.3-Flash`](https://huggingface.co/zai-org/GLM-5.3-Flash) base model.
 - **Ricky Brent** — [`rickybrent/GLM-5.3-Flash-HYPERFLARE-TP2`](https://huggingface.co/rickybrent/GLM-5.3-Flash-HYPERFLARE-TP2) inspired this repository.
-- Upstream of the upstreams listed above.
 
-Packaged, validated and published on a dual Asus GX10 setup. The package's publisher identity is a signing identity, not an authorship claim.
-All credit for the model, engine, kernels and fixes belongs to the projects and people listed above.
+Packaged, validated, and published on a dual Asus GX10 setup. The package's publisher identity is a signing identity, not an authorship claim.
+All credits for the model, engine, kernels and fixes belong to the projects and people listed above.
 
 ## License
 
 Weights derive from
 [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local)
 and are subject to the **[NVIDIA Open Model Agreement](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-agreement/)** (license recorded by the
-exporter: `nvidia-open-model-agreement`). Review and accept that agreement
-before use.
+exporter: `nvidia-open-model-agreement`). Review and accept that agreement before use.
 
-Hyperflare is licensed under Apache-2.0.
-
-Writeup itself is GPLv3 or later.
+Hyperflare is licensed under `Apache-2.0`.
