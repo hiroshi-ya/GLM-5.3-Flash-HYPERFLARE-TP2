@@ -20,7 +20,7 @@ base_model: nvidia/GLM-5.3-Flash-FP4-Local
 # GLM-5.3-Flash FP4 HYPERFLARE — TP2, GB10
 
 A prepared [Hyperflare](https://github.com/NVIDIA/hyperflare-inference) (at `1a53275`) runtime
-package for **GLM-5.3-Flash** running across two **DGX Sparks** (GB10 / SM121). The base checkpoint for the model is
+package for **GLM-5.3-Flash** running across two **DGX Sparks** (GB10 / SM121), and a detailed guide on how to serve/reproduce it. The base checkpoint for the model is
 [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local)
 at `76348ddb`. This package can be served at a full **1,048,576-token** context with around **4.5 million KV tokens**.
 
@@ -65,7 +65,7 @@ If you just want to download this package and serve it, here are the prerequisit
 > You cannot freely modify the properties of this packaged runtime. For example, the `--mtp-draft-tokens` was set to 5 during the export, meaning that `flare` cannot use more than 5 speculative tokens when serving this package. Same applies to the concurrency and prefill chunk properties. If you want to adjust the model properties, you have to export your own package. See [Reproduction](#reproduction).
 
 ### Connect your DGX Sparks
-If you have not done so, connect your DGX Sparks with a QSFP-56 cable to utilize the 200 GbE ConnectX-7. After you plugged in the cable, configure your local network connection. Refer to Nvidia's [guide](https://build.nvidia.com/spark/connect-multiple-sparks/overview) if you don't know how to.
+If you have not done so, connect your DGX Sparks with a QSFP-56 cable to utilize the 200 GbE ConnectX-7. After you plugged in the cable, properly configure your RoCE setup. Refer to Nvidia's [guide](https://build.nvidia.com/spark/connect-multiple-sparks/overview) if you don't know how to.
 
 > [!NOTE]
 > CUDA runtime and NCCL are not required for serving. `flare`'s cross-node parallelism runs directly on RoCE.
