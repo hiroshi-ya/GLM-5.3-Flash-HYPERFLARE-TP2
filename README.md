@@ -334,7 +334,7 @@ $ flare run /path/to/your/output.safetensors \
     --rank 1 \
     --gpus 0
 ```
-If you didn't pack your core, **drop the model path completely**:
+If you didn't pack your core, **drop the model path completely** and let `flare` copy the necessary files for you:
 ```console
 $ flare run \
     --publisher-keys /path/to/your/publisher.json \
@@ -344,3 +344,28 @@ $ flare run \
 ```
 
 When serving for the first time, `flare` will ask you if you trust the publisher. After you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/` by default, and the `--publisher-keys` argument will be no longer needed in the future.
+
+## Credits
+
+This repository is a packaging, validation, and publication effort only. The model, runtime, recipes, kernels, and benchmark tooling are the work of others. No authorship claim is made over any upstream work.
+
+- **Local Inference Lab and the NVIDIA Hyperflare (formerly Flare) authors and contributors** — runtime, recipes, package format and documentation ([`NVIDIA/hyperflare-inference`](https://github.com/NVIDIA/hyperflare-inference)).
+- **NVIDIA and Z.ai** — the GLM-5.3-Flash FP4 checkpoint ([`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local/tree/main)) and the [`
+zai-org/GLM-5.3-Flash`](https://huggingface.co/zai-org/GLM-5.3-Flash) base model.
+- **Ricky Brent** — [`rickybrent/GLM-5.3-Flash-HYPERFLARE-TP2`](https://huggingface.co/rickybrent/GLM-5.3-Flash-HYPERFLARE-TP2) inspired this repository.
+- Upstream of the upstreams listed above.
+
+Packaged, validated and published on a dual Asus GX10 setup. The package's publisher identity is a signing identity, not an authorship claim.
+All credit for the model, engine, kernels and fixes belongs to the projects and people listed above.
+
+## License
+
+Weights derive from
+[`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local)
+and are subject to the **[NVIDIA Open Model Agreement](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-agreement/)** (license recorded by the
+exporter: `nvidia-open-model-agreement`). Review and accept that agreement
+before use.
+
+Hyperflare is licensed under Apache-2.0.
+
+Writeup itself is GPLv3 or later.
