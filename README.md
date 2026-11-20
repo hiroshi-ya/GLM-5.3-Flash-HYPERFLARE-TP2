@@ -90,6 +90,9 @@ I'm not sure if `flare` automatically detects the default huggingface cache dire
 
 If you do not have `hf`, `flare` itself comes with a `download` function. You can read on how to use it either by running `flare download -h` or referring to the [documentation](https://github.com/NVIDIA/hyperflare-inference/blob/main/docs/cli-design.md#downloading-published-cores).
 
+>[!IMPORTANT]
+>`flare` can only serve a core that's properly exported via `ignition`, meaning that you cannot use `flare` to directly serve the original `nvidia/GLM-5.3-Flash-FP4-Local` checkpoints. That said, the original checkpoints are not needed to serve this hyperflare package.
+
 ### Package structure
 ```
 GLM-5.3-Flash-HYPERFLARE-GB10-TP2
@@ -98,7 +101,7 @@ GLM-5.3-Flash-HYPERFLARE-GB10-TP2
 ├── publisher.json
 └── README.md
 ```
-`glm-5.3-flash-hyperflare-gb10-tp2.safetensors` is the packaged hyperflare runtime, and `publisher.json` is the publisher key. When serving the model for the first time, you will have to trust the publisher first, or `flare` will refuse to serve the model.
+`glm-5.3-flash-hyperflare-gb10-tp2.safetensors` is the packaged hyperflare runtime (yes, a single file), and `publisher.json` is the publisher key. When serving the model for the first time, you will have to trust the publisher first, or `flare` will refuse to serve the model.
 
 ### Serve
 Start the head node:
@@ -128,6 +131,7 @@ $ flare run $MODEL_PATH/glm-5.3-flash-hyperflare-gb10-tp2.safetensors \
     --rank 1 \
     --gpus 0
 ```
+If you do not specify the model path on the worker node, `flare` will copy the necessary files from the head node to the worker node for you automatically.
 
 When serving for the first time, `flare` will ask you if you trust the publisher (on both nodes). After you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/` by default, and the `--publisher-keys` argument will no longer be needed in the future.
 
