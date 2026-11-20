@@ -322,7 +322,7 @@ After the conversion, the generated `.safetensors` file will include everything 
 Before serving across both nodes, you need to make sure that the publisher identification `json` file is available on both nodes.
 
 If you did not sign your core:
-- During the `ignition export` process, `ignition` will generate the development key on the head node only. You need to manually copy the `development-publisher.json` to your worker node. On both nodes, the default location is `~/.config/flare`.
+- During the `ignition export` process, `ignition` will generate the development key on the head node only. You need to manually copy the `development-publisher.json` to your worker node. On both nodes, the default location is `~/.config/flare`. After that, you do not need to pass `--publisher-keys` to `flare run`.
 
 If you signed your core:
 - Make sure to copy the `publisher.json` to your worker node.
@@ -370,7 +370,7 @@ If you want to publish your exported core, don't forget to include the `publishe
 ### Caveats
 After `ignition export`, both the head and the worker node will have their export cache stored at `~/.cache/flare` by default. The head node will cache the whole model, while the worker node will cache roughly half the model (`rank-1` part). This is a good design, but it seems that the worker node `flare` does not know how to utilize `ignition` cache. No matter how I tried to execute `flare run` on my worker node, `flare` would always pull the `rank-1` part from the `rank-0` node, despite the existence of `ignition` cache.
 
-Besides, when the exported core is not in packed form but in directory form, even if the entire package is stored at the same location on both nodes, `flare run /path/to/model` on worker node will still pull the `rank-1` part from the `rank-0` node. Even worse, if one specifies the model path, it seems that the worker node `flare` will assign a `MODEL@VERSION` to the pulled cache based on the finish time of head-to-worker copy, meaning that there will be a "version mismatch" and `flare` will refuse to serve. Hence, I mentioned that one should drop the model path completely and avoid copying the package manually if the core is not packed in the [Reproduction -> Serve](#serve-1) section.
+Besides, when the exported core is not in packed form but in directory form, even if the entire package is stored at the same location on both nodes, `flare run /path/to/model` on worker node will still pull the `rank-1` part from the `rank-0` node. Even worse, if one specifies the model path, it seems that the worker node `flare` will assign a `MODEL@VERSION` to the pulled cache based on the finish time of head-to-worker copy, meaning that there will be a "version mismatch" and `flare` will refuse to serve. Hence, in the [Reproduction -> Serve](#serve-1) section, I mentioned that one should drop the model path completely and avoid copying the package manually if the core is not packed.
 
 ## Credits
 
