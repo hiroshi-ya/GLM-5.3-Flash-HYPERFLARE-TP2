@@ -44,9 +44,6 @@ If you just want to download this package and serve it, here are the prerequisit
 4. A way to download large files from huggingface.
 5. Working Nvidia driver (R580 or later) on both nodes.
 
-> [!TIP]
-> If you are low on storage space, once you obtained the `flare` executable binary, you can delete the source code and build artifacts. The binary itself is about 26 MiB. Besides, consider exporting your download directory as an NFS mount point, so you can not only save space but also avoid copying the model manually.
-
 ### Package properties
 
 | Model                | GLM-5.3-Flash                    |
@@ -71,14 +68,26 @@ If you have not done so, connect your DGX Sparks with a QSFP-56 cable to utilize
 > CUDA runtime and NCCL are not required for serving. `flare`'s cross-node parallelism runs directly on RoCE.
 
 ### Obtain `flare`
-On one node:
+Install the following build dependencies on both nodes:
+```console
+# apt install build-essential cmake ninja-build pkg-config protobuf-compiler libssl-dev python3-dev liburing-dev libibverbs-dev
+```
+If on Fedora:
+```console
+# dnf install @development-tools cmake ninja-build pkgconf-pkg-config protobuf-compiler openssl-devel python3-devel liburing-devel rdma-core-devel libnl3
+```
+
+Then, on one node:
 ```console
 $ git clone https://github.com/NVIDIA/hyperflare-inference
 $ cd hyperflare-inference
 $ # git checkout 1a53275 # in case a breaking change happens
 $ cargo build --release --manifest-path flare-cli/Cargo.toml
 ```
-After a successful compilation, the `flare` executable binary will be generated in `hyperflare-inference/flare-cli/target/release/`. You can either do the compilation again on your second node, or simply copy the executable binary over there.
+After a successful compilation, the `flare` executable binary will be generated in `hyperflare-inference/flare-cli/target/release/`. You can either compile from source again on your second node, or simply copy the executable binary over there if both nodes are running the same Linux distribution.
+
+> [!TIP]
+> If you are low on storage space, once you obtained the `flare` executable binary, you can delete the source code and build artifacts (saves ~9.5 GiB). The binary itself is about 26 MiB. Besides, consider exporting your download directory as an NFS mount point, so you can not only save space but also avoid copying the model manually.
 
 ### Obtain this model package
 If you have the `hf` CLI tool:
@@ -162,11 +171,11 @@ If you want to export the hyperflare core by yourself, here are the prerequisite
 ### Build dependencies
 Install the following build dependencies:
 ```console
-# apt-get install build-essential cmake ninja-build pkg-config protobuf-compiler libssl-dev python3-dev liburing-dev
+# apt install build-essential cmake ninja-build pkg-config protobuf-compiler libssl-dev python3-dev liburing-dev libibverbs-dev
 ```
 If on Fedora:
 ```console
-# dnf install @development-tools cmake ninja-build pkgconf-pkg-config protobuf-compiler openssl-devel python3-devel liburing-devel
+# dnf install @development-tools cmake ninja-build pkgconf-pkg-config protobuf-compiler openssl-devel python3-devel liburing-devel rdma-core-devel libnl3
 ```
 
 ### Reproduction flow
@@ -187,6 +196,9 @@ $ cargo build --release --manifest-path flare-cli/Cargo.toml
 ```
 > [!NOTE]
 > `uv sync` will pull the CUDA toolkit and NCCL to the virtual environment, but the project will prioritize the host-native CUDA. `ignition` may work without a system-wide `nvcc`, but that has not been verified here.
+
+If you are missing RDMA related libraries:
+
 
 ### Export the core
 On both nodes:
