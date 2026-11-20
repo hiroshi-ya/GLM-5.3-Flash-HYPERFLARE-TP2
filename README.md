@@ -22,15 +22,15 @@ base_model: nvidia/GLM-5.3-Flash-FP4-Local
 A prepared [Hyperflare](https://github.com/NVIDIA/hyperflare-inference) (at `1a53275`) runtime
 package for **GLM-5.3-Flash** running across two **DGX Sparks** (GB10 / SM121), and a detailed guide on how to serve/reproduce it. The base checkpoint for the model is
 [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local)
-at `76348ddb`. This package can be served at a full **1,048,576-token** context with around **4.5 million KV tokens**.
+at `76348ddb`. This package can be served with vision support, a full **1,048,576-token** context, and around **4.5 million KV tokens**.
 
 ## Before you spend time reading this
 
 If you need a TLDR, you can find some [`llama-benchy`](https://github.com/eugr/llama-benchy) results generated on a dual Asus GX10 setup in [BENCH.md](BENCH.md).
 
-If you are still interested after browsing that, here are some additional reasons on why you might want to read through this:
+If you are still interested after browsing that, here are some additional reasons why you might want to read through this:
 1. You don't enjoy using Docker.
-2. You don't enjoy messing with endless amount of environment variables.
+2. You don't enjoy messing with an endless amount of environment variables.
 3. vLLM comes with its own glitches, and you are too tired to deal with them.
 4. vLLM loads too slowly, especially during cold boots.
 5. You want to play with Hyperflare on your own, but its (AI-written) documentation is too confusing and lengthy to follow.
@@ -87,7 +87,7 @@ $ cargo build --release --manifest-path flare-cli/Cargo.toml
 After a successful compilation, the `flare` executable binary will be generated in `hyperflare-inference/flare-cli/target/release/`. You can either compile from source again on your second node, or simply copy the executable binary over there if both nodes are running the same Linux distribution.
 
 > [!TIP]
-> If you are low on storage space, once you obtained the `flare` executable binary, you can delete the source code and build artifacts (saves ~9.5 GiB). The binary itself is about 26 MiB. Besides, consider exporting your download directory as an NFS mount point, so you can not only save space but also avoid copying the model manually.
+> If you are low on storage space, once you have obtained the `flare` executable binary, you can delete the source code and build artifacts (saves ~9.5 GiB). The binary itself is about 26 MiB. Besides, consider exporting your download directory as an NFS mount point, so you can not only save space but also avoid copying the model manually.
 
 ### Obtain this model package
 If you have the `hf` CLI tool:
@@ -206,12 +206,12 @@ $ pwd # make sure you are at the root of hyperflare source
 $ . .venv/bin/activate # activate the virtual environment
 ```
 
-After that, you will need to create an `agent.token` file in `~/.config/flare` on both nodes. According to the [documentation](https://github.com/NVIDIA/hyperflare-inference/blob/main/docs/multi-host.md#prepare-the-core):
+Next, you will need to create an `agent.token` file in `~/.config/flare` on both nodes. According to the [documentation](https://github.com/NVIDIA/hyperflare-inference/blob/main/docs/multi-host.md#prepare-the-core):
 > The file needs identical contents of at least 32 random bytes and mode `600` on each host.
 
-Apparently, the `agent.token` check is designed to make sure that networking is secure during ignition. I'm not sure what's the best practice for that, so use your own creative way.
+Apparently, the `agent.token` check is designed to make sure that networking is secure during ignition. I'm not sure what the best practice is, so use your own creative way.
 
-Before we export the core, there is another important step. `ignition` needs a huge amount of VRAM to perform the export, and because DGX Spark uses shared memory for CPU and GPU, CUDA may throw `CUDA_ERROR_OUT_OF_MEMORY` even if there is available memory. Therefore, it's recommended that you flush the page cache before exporting the core:
+Before we export the core, there is another important step. `ignition` needs a huge amount of VRAM to perform the export, and because DGX Spark uses shared memory for CPU and GPU, CUDA may throw `CUDA_ERROR_OUT_OF_MEMORY` even if there is available memory. Therefore, it's recommended that you terminate all unnecessary programs and flush the page cache before exporting the core:
 ```console
 $ sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
 ```
