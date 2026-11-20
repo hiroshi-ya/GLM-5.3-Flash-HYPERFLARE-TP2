@@ -141,7 +141,7 @@ $ curl http://$SERVER_IP:$SERVER_PORT/v1/models # check if alive
 $ curl http://$SERVER_IP:$SERVER_PORT/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "GLM-5.3-Flash",
+    "model": "nvidia/GLM-5.3-Flash-FP4-Local",
     "messages": [
       {"role": "user", "content": "hi how are you"}
     ],
@@ -225,7 +225,8 @@ $ ignition join $HEAD_IP:$HEAD_PORT \
 
 >[!NOTE]
 > 1. `ignition` will check the default huggingface download cache directory. If `ignition` isn't able to locate the checkpoints locally, it will download the checkpoints for you. If your checkpoints are saved in a customized location, replace `nvidia/GLM-5.3-Flash-FP4-Local` with `/path/to/the/model`.
-> 2. The export procedure can take a long time (about an hour).
+> 2. Hyperflare (as of `1a53275`) can only export from one specific version of GLM-5.3-Flash: [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local). That said, you cannot use checkpoints like `nvidia/GLM-5.3-Flash-NVFP4` and `RedHatAI/GLM-5.3-Flash-NVFP4`.
+> 3. The export procedure can take a long time (about an hour).
 
 
 If you want finer control, refer to the full argument list:
