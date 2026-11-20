@@ -1,7 +1,7 @@
 ---
 license: other
 license_name: nvidia-open-model-agreement
-license_link: https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local
+license_link: https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-agreement/
 pipeline_tag: image-text-to-text
 tags:
 - hyperflare
