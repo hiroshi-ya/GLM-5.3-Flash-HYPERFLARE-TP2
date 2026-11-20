@@ -151,7 +151,7 @@ $ curl http://$SERVER_IP:$SERVER_PORT/v1/chat/completions \
 If you want to export the hyperflare core by yourself, here are the prerequisites:
 1. A relatively new pair of `rustc` and `cargo`, and `uv`.
 2. Two DGX Sparks (FE or variants) connected via ConnectX7.
-3. At least ~360 GiB of available storage space: the original [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local) needs about 177 GiB, and the export needs about 171 GiB.
+3. At least ~365 GiB of available storage space: the original [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local) needs about 177 GiB, and the export needs about 181 GiB.
 4. A way to download large files from huggingface.
 5. Working Nvidia driver (R580 or later) on both nodes.
 
