@@ -271,7 +271,7 @@ $ ignition sign /path/to/your/flare/cores/models/nvidia_2FGLM-5.3-Flash-FP4-Loca
   --namespace your-name \
   --official-source https://huggingface.co/your-name/your-repo
 ```
-Replace `nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439` with the actual `MODEL/VERSION` name.
+Here, `nvidia_2FGLM-5.3-Flash-FP4-Local` is the name of the `MODEL` (`_2F` is `/`), and `gb10-tp2-202611190439` is `MODEL`'s `VERSION`. Replace `nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439` with the actual `MODEL/VERSION`.
 
 >[!TIP]
 >`ignition sign` uses hard links for the model weight, so you do not have to worry about storage usage.
@@ -322,7 +322,7 @@ $ flare run /path/to/your/output.safetensors \
     --rank 0 \
     --gpus 0
 ```
-If you didn't pack your core, replace `/path/to/your/output.safetensors` with `/path/to/your/signed/glm-5.3-flash` or `nvidia/GLM-5.3-Flash-FP4-Local@MODEL_VERSION`. `MODEL_VERSION` can be obtained from `flare models list`, and if there is only one version, you can drop the `@VERSION`.
+If you didn't pack your core, replace `/path/to/your/output.safetensors` with `/path/to/your/signed/glm-5.3-flash` or `nvidia/GLM-5.3-Flash-FP4-Local@VERSION`. `VERSION` can be obtained from `flare models list`, and if there is only one version, you can drop the `@VERSION`.
 
 Then, start your worker node:
 ```console
