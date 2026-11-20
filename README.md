@@ -26,7 +26,7 @@ at `76348ddb`. This package can be served at a full **1,048,576-token** context 
 
 ## Before you spend time reading this
 
-If you need a TLDR, you can find some [llama-benchy](https://github.com/eugr/llama-benchy) results generated on a dual Asus GX10 setup in [BENCH.md](BENCH.md).
+If you need a TLDR, you can find some [`llama-benchy`](https://github.com/eugr/llama-benchy) results generated on a dual Asus GX10 setup in [BENCH.md](BENCH.md).
 
 If you are still interested after browsing that, here are some additional reasons on why you might want to read through this:
 1. You don't enjoy using Docker.
