@@ -197,9 +197,6 @@ $ cargo build --release --manifest-path flare-cli/Cargo.toml
 > [!NOTE]
 > `uv sync` will pull the CUDA toolkit and NCCL to the virtual environment, but the project will prioritize the host-native CUDA. `ignition` may work without a system-wide `nvcc`, but that has not been verified here.
 
-If you are missing RDMA related libraries:
-
-
 ### Export the core
 On both nodes:
 ```console
@@ -296,7 +293,7 @@ $ ignition sign /path/to/your/flare/cores/models/nvidia_2FGLM-5.3-Flash-FP4-Loca
 Here, `nvidia_2FGLM-5.3-Flash-FP4-Local` is the name of the `MODEL` (`/` is replaced by `_2F`), and `gb10-tp2-202611190439` is `MODEL`'s `VERSION`. Replace `nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439` with the actual `MODEL/VERSION`.
 
 >[!TIP]
->`ignition sign` uses hard links for the model weights, so you do not have to worry about storage usage.
+>`ignition sign` uses hard links for the model weights, so signing the core does not take much storage spaces.
 
 After signing the core, inspect its properties:
 ```console
@@ -370,13 +367,17 @@ When serving for the first time, `flare` will ask you if you trust the publisher
 ### Publish
 If you want to publish your exported core, don't forget to include the `publisher.json` file in your repository.
 
+### Caveats
+After `ignition export`, both the head and the worker node will have their export cache stored at `~/.cache/flare` by default. The head node will cache the whole model, while the worker node will cache roughly half the model (`rank-1` part). This is a good design, but it seems that the worker node `flare` does not know how to utilize `ignition` cache. No matter how I tried to execute `flare run` on my worker node, `flare` would always pull the `rank-1` part from the `rank-0` node, despite the existence of `ignition` cache.
+
+Besides, when the exported core is not in packed form but in directory form, even if the entire package is stored at the same location on both nodes, `flare run /path/to/model` on worker node will still pull the `rank-1` part from the `rank-0` node. Even worse, if one specifies the model path, it seems that the worker node `flare` will assign a `MODEL@VERSION` to the pulled cache based on the finish time of head-to-worker copy, meaning that there will be a "version mismatch" and `flare` will refuse to serve. Hence, I mentioned that one should drop the model path completely and avoid copying the package manually if the core is not packed in the [Reproduction -> Serve](#serve-1) section.
+
 ## Credits
 
 This repository is a packaging, validation, and publication effort only. The model, runtime, recipes, kernels, and benchmark tooling are the work of others. No authorship claim is made over any upstream work.
 
 - **Local Inference Lab and the NVIDIA Hyperflare (formerly Flare) authors and contributors** — runtime, recipes, package format, and documentation ([`NVIDIA/hyperflare-inference`](https://github.com/NVIDIA/hyperflare-inference)).
-- **NVIDIA and Z.ai** — the GLM-5.3-Flash FP4 checkpoint ([`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local/tree/main)) and the [`
-zai-org/GLM-5.3-Flash`](https://huggingface.co/zai-org/GLM-5.3-Flash) base model.
+- **NVIDIA and Z.ai** — the GLM-5.3-Flash FP4 checkpoint ([`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local/tree/main)) and the [`zai-org/GLM-5.3-Flash`](https://huggingface.co/zai-org/GLM-5.3-Flash) base model.
 - **Ricky Brent** — [`rickybrent/GLM-5.3-Flash-HYPERFLARE-TP2`](https://huggingface.co/rickybrent/GLM-5.3-Flash-HYPERFLARE-TP2) inspired this repository.
 
 Packaged, validated, and published on a dual Asus GX10 setup. The package's publisher identity is a signing identity, not an authorship claim.
