@@ -24,6 +24,8 @@ package for **GLM-5.3-Flash** running across two **DGX Sparks** (GB10 / SM121), 
 [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local)
 at `76348ddb`. This package can be served with vision support, a full **1,048,576-token** context, and around **4.5 million KV tokens**.
 
+[![Static Badge](https://img.shields.io/badge/github-repo-black?style=for-the-badge&logo=github)](https://github.com/hiroshi-ya/GLM-5.3-Flash-HYPERFLARE-TP2) &nbsp; [![Static Badge](https://img.shields.io/badge/hugging%20face-model%20card-%23FFD21E?style=for-the-badge&logo=huggingface)](https://huggingface.co/hiroshiya/GLM-5.3-Flash-HYPERFLARE-GB10-TP2)
+
 ## Before you spend time reading this
 
 If you need a TLDR, you can find some [`llama-benchy`](https://github.com/eugr/llama-benchy) results generated on a dual Asus GX10 setup in [BENCH.md](BENCH.md).
