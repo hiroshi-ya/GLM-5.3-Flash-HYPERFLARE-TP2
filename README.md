@@ -241,7 +241,7 @@ $ flare inspect nvidia/GLM-5.3-Flash-FP4-Local
 ```
 
 ### Sign the core
-This step is optional if you just want to serve locally.
+This step is optional if you don't plan to publicly distribute your exported core.
 
 First, create an encrypted production signing key:
 ```console
@@ -266,7 +266,7 @@ nvidia/GLM-5.3-Flash-FP4-Local
 
 [rest of the output trimmed]
 ```
-If you haven't created a customized `config.toml`, `~/.cache/flare/core` will be the default location for exported cores, and the core for each specific model will be exported to `~/.cache/flare/core/MODEL_NAME/MODEL_VERSION`.
+If you haven't created a customized `config.toml`, `~/.cache/flare/core` will be the default location for exported cores, and the core for each specific model will be exported to `~/.cache/flare/core/MODEL/VERSION`.
 
 Then, proceed to sign the core:
 ```console
@@ -276,10 +276,10 @@ $ ignition sign /path/to/your/flare/cores/models/nvidia_2FGLM-5.3-Flash-FP4-Loca
   --namespace your-name \
   --official-source https://huggingface.co/your-name/your-repo
 ```
-Here, `nvidia_2FGLM-5.3-Flash-FP4-Local` is the name of the `MODEL` (`_2F` is `/`), and `gb10-tp2-202611190439` is `MODEL`'s `VERSION`. Replace `nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439` with the actual `MODEL/VERSION`.
+Here, `nvidia_2FGLM-5.3-Flash-FP4-Local` is the name of the `MODEL` (`/` is replaced by `_2F`), and `gb10-tp2-202611190439` is `MODEL`'s `VERSION`. Replace `nvidia_2FGLM-5.3-Flash-FP4-Local/gb10-tp2-202611190439` with the actual `MODEL/VERSION`.
 
 >[!TIP]
->`ignition sign` uses hard links for the model weight, so you do not have to worry about storage usage.
+>`ignition sign` uses hard links for the model weights, so you do not have to worry about storage usage.
 
 After signing the core, inspect its properties:
 ```console
@@ -288,9 +288,7 @@ $ flare inspect /path/to/your/signed/glm-5.3-flash --all | less
 In the `CORE` section, `publisher` should be `Your Name (your-namespace)`, and the signing key should be a `published key`.
 
 ### Pack the core
-This step is optional if you just want to serve locally. However:
-1. If you are using shared storage for storing models (via NFS, NVMe-oF, etc.), I strongly recommend you pack your core into a single `.safetensors` file.
-2. If you are not using any shared storage (i.e., you make identical copies from one node to the other), I recommend that you avoid this step.
+This step is optional. However, if you are using shared storage for storing models (via NFS, NVMe-oF, etc.), I strongly recommend you pack your core into a single `.safetensors` file.
 
 ```console
 $ ignition convert /path/to/your/signed/glm-5.3-flash \
@@ -299,6 +297,8 @@ $ ignition convert /path/to/your/signed/glm-5.3-flash \
 ```
 
 If you didn't sign your core and don't know where your exported unsigned core is, go back to [Sign the core](#sign-the-core) to find out how to locate your unsigned core.
+
+After the conversion, the generated `.safetensors` file will include everything needed for `flare` to serve.
 
 >[!WARNING]
 >Packing the core requires about 181 GiB of additional storage space. Leave enough space for the conversion.
@@ -339,7 +339,7 @@ $ flare run /path/to/your/output.safetensors \
     --rank 1 \
     --gpus 0
 ```
-If you didn't pack your core, **drop the model path completely** and let `flare` copy the necessary files for you:
+If you are not using a shared storage for holding the `output.safetensors`, you can drop `/path/to/your/output.safetensors` and let `flare` do the head-to-worker copy for you. If you didn't pack your core, you **have to drop the model path** and let `flare` copy the necessary files for your worker node:
 ```console
 $ flare run \
     --publisher-keys /path/to/your/publisher.json \
@@ -351,7 +351,7 @@ $ flare run \
 When serving for the first time, `flare` will ask you if you trust the publisher. After you trust the publisher, `flare` will generate/update the `trust.toml` in `~/.config/flare/` by default, and the `--publisher-keys` argument will no longer be needed in the future.
 
 ### Publish
-If you want to publish your export, don't forget to include the `publisher.json` file in your repository.
+If you want to publish your exported core, don't forget to include the `publisher.json` file in your repository.
 
 ## Credits
 
