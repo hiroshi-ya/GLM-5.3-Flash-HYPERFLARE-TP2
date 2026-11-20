@@ -202,6 +202,11 @@ After that, you will need to create an `agent.token` file in `~/.config/flare` o
 
 Apparently, the `agent.token` check is designed to make sure that networking is secure during ignition. I'm not sure what's the best practice for that, so use your own creative way.
 
+Before we export the core, there is another important step. `ignition` needs a huge amount of VRAM to perform the export, and because DGX Spark uses shared memory for CPU and GPU, CUDA may throw `CUDA_ERROR_OUT_OF_MEMORY` even if there is available memory. Therefore, it's recommended that you flush the page cache before exporting the core:
+```console
+$ sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+```
+
 After that, we are ready to export the core. Start the head node first:
 ```console
 $ export HEAD_IP=   # IP address of your head node
