@@ -1,4 +1,4 @@
-These `llama-benchy` results are obtained with a `--mtp-draft-tokens 5` core:
+These `llama-benchy` results are obtained with a `--mtp-draft-tokens 5` core. "Cold" boot completes within 47 seconds.
 
 ```console
 $ flare run $MODEL_PATH/glm-5.3-flash-hyperflare-gb10-tp2.safetensors \
