@@ -165,10 +165,13 @@ $ curl http://$SERVER_IP:$SERVER_PORT/v1/chat/completions \
 
 If you want to export the hyperflare core by yourself, here are the prerequisites:
 1. A relatively new pair of `rustc` and `cargo`, and `uv`.
-2. Two DGX Sparks (FE or variants) connected via ConnectX7.
+2. Two or four DGX Sparks (FE or variants) connected via ConnectX7.
 3. At least ~365 GiB of available storage space: the original [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local) needs about 177 GiB, and the export needs about 181 GiB.
 4. A way to download large files from huggingface.
-5. Working Nvidia driver (R580 or later) on both nodes.
+5. Working Nvidia driver (R580 or later) on all nodes.
+
+> [!WARNING]
+> TP=3 is likely not supported.
 
 ### Build dependencies
 Install the following build dependencies:
@@ -188,7 +191,7 @@ If on Fedora:
 5. Use `flare` to serve the hyperflare core.
 
 ### Obtain `ignition` and `flare`
-On both nodes:
+On all nodes:
 ```console
 $ git clone https://github.com/NVIDIA/hyperflare-inference
 $ cd hyperflare-inference
@@ -200,7 +203,7 @@ $ cargo build --release --manifest-path flare-cli/Cargo.toml
 > `uv sync` will pull the CUDA toolkit and NCCL to the virtual environment, but the project will prioritize the host-native CUDA. `ignition` may work without a system-wide `nvcc`, but that has not been verified here.
 
 ### Export the core
-On both nodes:
+On all nodes:
 ```console
 $ pwd # make sure you are at the root of hyperflare source
 /path/to/hyperflare-inference
@@ -208,12 +211,12 @@ $ pwd # make sure you are at the root of hyperflare source
 $ . .venv/bin/activate # activate the virtual environment
 ```
 
-Next, you will need to create an `agent.token` file in `~/.config/flare` on both nodes. According to the [documentation](https://github.com/NVIDIA/hyperflare-inference/blob/main/docs/multi-host.md#prepare-the-core):
+Next, you will need to create an `agent.token` file in `~/.config/flare` on all nodes. According to the [documentation](https://github.com/NVIDIA/hyperflare-inference/blob/main/docs/multi-host.md#prepare-the-core):
 > The file needs identical contents of at least 32 random bytes and mode `600` on each host.
 
 Apparently, the `agent.token` check is designed to make sure that networking is secure during ignition. I'm not sure what the best practice is, so use your own creative way.
 
-Before we export the core, there is another important step. `ignition` needs a huge amount of VRAM to perform the export, and because DGX Spark uses shared memory for CPU and GPU, CUDA may throw `CUDA_ERROR_OUT_OF_MEMORY` even if there is available memory. Therefore, it's recommended that you terminate all unnecessary programs and flush the page cache before exporting the core:
+Before we export the core, there is another important step. `ignition` needs a huge amount of VRAM to perform the export, and because DGX Spark uses shared memory for CPU and GPU, CUDA may throw `CUDA_ERROR_OUT_OF_MEMORY` even if there is available memory. Therefore, it's recommended that you terminate all unnecessary programs and flush the page cache on all nodes before performing the export:
 ```console
 $ sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
 ```
@@ -229,8 +232,9 @@ $ ignition export nvidia/GLM-5.3-Flash-FP4-Local \
     --ranks 2 \
     --gpus 0
 ```
+For a TP=4 (quad DGX Sparks) setup, pass `--ranks 4` instead of `--ranks 2`.
 
-Then, start your worker node:
+Then, start your (first) worker node:
 ```console
 $ export HEAD_IP=   # IP address of your head node
 $ export HEAD_PORT= # which port to use for head-worker communication
@@ -238,11 +242,12 @@ $ ignition join $HEAD_IP:$HEAD_PORT \
     --ranks 2 \
     --rank 1
 ```
+For a TP=4 (quad DGX Sparks) setup, pass `--ranks 4` instead of `--ranks 2`, and adjust `--rank <N>` accordingly.
 
 >[!NOTE]
 > 1. `ignition` will check the default huggingface download cache directory. If `ignition` isn't able to locate the checkpoints locally, it will download the checkpoints for you. If your checkpoints are saved in a customized location, replace `nvidia/GLM-5.3-Flash-FP4-Local` with `/path/to/the/model`.
 > 2. Hyperflare (as of `1a53275`) can only export from one specific version of GLM-5.3-Flash: [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local). That said, you cannot use checkpoints like `nvidia/GLM-5.3-Flash-NVFP4` and `RedHatAI/GLM-5.3-Flash-NVFP4`.
-> 3. The export procedure can take a long time (about an hour).
+> 3. The export procedure can take a long time (about an hour for TP=2 setup).
 
 
 If you want finer control, refer to the full argument list:
@@ -321,13 +326,13 @@ After the conversion, the generated `.safetensors` file will include everything 
 
 ### Serve
 
-Before serving across both nodes, you need to make sure that the publisher identification `json` file is available on both nodes.
+Before serving across all nodes, you need to make sure that the publisher identification `json` file is available on all nodes.
 
 If you did not sign your core:
-- During the `ignition export` process, `ignition` will generate the development key on the head node only. You need to manually copy the `development-publisher.json` to your worker node. On both nodes, the default location is `~/.config/flare`. After that, you do not need to pass `--publisher-keys` to `flare run`.
+- During the `ignition export` process, `ignition` will generate the development key **on the head node only**. You need to manually copy the `development-publisher.json` to your worker node(s). The default location is `~/.config/flare`. After copying the file to all nodes, you do not need to specify `--publisher-keys` to `flare run`.
 
 If you signed your core:
-- Make sure to copy the `publisher.json` to your worker node.
+- Make sure to copy the `publisher.json` to your worker node(s).
 
 Start the head node first:
 ```console
@@ -345,7 +350,7 @@ $ flare run /path/to/your/output.safetensors \
 ```
 If you didn't pack your core, replace `/path/to/your/output.safetensors` with `/path/to/your/signed/glm-5.3-flash` or `nvidia/GLM-5.3-Flash-FP4-Local@VERSION`. `VERSION` can be obtained from `flare models list`, and if there is only one version, you can drop the `@VERSION`.
 
-Then, start your worker node:
+Then, start your (first) worker node:
 ```console
 $ export HEAD_IP=       # IP address of your head node
 $ export HEAD_PORT=     # which port to use for head-worker communication
@@ -355,6 +360,8 @@ $ flare run /path/to/your/output.safetensors \
     --rank 1 \
     --gpus 0
 ```
+If you have two more worker nodes, adjust `--rank <N>` accordingly.
+
 If you are not using a shared storage for holding the `output.safetensors`, you can drop `/path/to/your/output.safetensors` and let `flare` do the head-to-worker copy for you. If you didn't pack your core, you **have to drop the model path** and let `flare` copy the necessary files for your worker node:
 ```console
 $ flare run \
@@ -370,9 +377,11 @@ When serving for the first time, `flare` will ask you if you trust the publisher
 If you want to publish your exported core, don't forget to include the `publisher.json` file in your repository.
 
 ### Caveats
-After `ignition export`, both the head and the worker node will have their export cache stored at `~/.cache/flare` by default. The head node will cache the whole model, while the worker node will cache roughly half the model (`rank-1` part). This is a good design, but it seems that the worker node `flare` does not know how to utilize `ignition` cache. No matter how I tried to execute `flare run` on my worker node, `flare` would always pull the `rank-1` part from the `rank-0` node, despite the existence of `ignition` cache.
+For a TP=2 setup, after `ignition export`, both the head and the worker node will have their export cache stored at `~/.cache/flare` by default. The head node will cache the whole model, while the worker node will cache roughly half the model (`rank-1` part). This is a good design, but it seems that the worker node `flare` does not know how to utilize `ignition` cache. No matter how I tried to execute `flare run` on my worker node, `flare` would always pull the `rank-1` part from the `rank-0` node, despite the existence of `ignition` cache.
 
-Besides, when the exported core is not in packed form but in directory form, even if the entire package is stored at the same location on both nodes, `flare run /path/to/model` on worker node will still pull the `rank-1` part from the `rank-0` node. Even worse, if one specifies the model path, it seems that the worker node `flare` will assign a `MODEL@VERSION` to the pulled cache based on the finish time of head-to-worker copy, meaning that there will be a "version mismatch" and `flare` will refuse to serve. Hence, in the [Reproduction -> Serve](#serve-1) section, I mentioned that one should drop the model path completely and avoid copying the package manually if the core is not packed.
+Besides, when the exported core is not in packed form but in directory form, even if the entire package is stored at the same location on both nodes, `flare run /path/to/model` on worker node will still pull the `rank-1` part from the `rank-0` node. Even worse, if one specifies the model path, it seems that the worker node `flare` will assign a `MODEL@VERSION` to the pulled cache based on the finish time of head-to-worker copy, meaning that there will be a "version mismatch" and `flare` will refuse to serve. Hence, it's mentioned in the [Reproduction -> Serve](#serve-1) that one should drop the model path completely and avoid copying the package manually if the core is not packed.
+
+TP=4 export and serving behavior is not verified, but will likely behave the same.
 
 ## Credits
 
